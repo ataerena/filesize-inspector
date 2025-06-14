@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    ReadInitialDirectory: () => ipcRenderer.invoke('read-initial-directory'),
+    ReadDirectory: (directory: string | null) => ipcRenderer.invoke('read-directory', directory),
 });
 
 window.addEventListener('DOMContentLoaded', () => {

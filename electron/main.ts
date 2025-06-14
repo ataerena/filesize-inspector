@@ -9,8 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    fullscreen: true,
     webPreferences: {
         preload: path.join(__dirname, 'preload.mjs')
     }
@@ -36,46 +35,44 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.handle('read-initial-directory', async (_event) => {
+ipcMain.handle('read-directory', async (_event, directory: string | null) => {
+  if (!directory) {
+    directory = os.platform() === 'win32' ? (process.env.SystemDrive || process.cwd().slice(0, 3)) + '\\' : '/';;
+  }
+  
+  return await ReadProcess(directory);
+});
+
+async function ReadProcess(directory: string): Promise<FileItem[] | {error: string}> {
   try {
-    const root = os.platform() === 'win32' ? process.env.SystemDrive + '\\' : '/';
-    
-    let files_arr: any = fs.readdirSync(root);
+    const files_arr: any = fs.readdirSync(directory);
 
     let files: any = [];
     for (let i = 0; i < files_arr.length; i++) {
       const file = files_arr[i];
-      
-      const path = await getPath([root, file]);
-      const stat = fs.statSync(path);
-      
-      if (!stat.isDirectory()) continue;
+      let stat: fs.Stats;
+      const full_path = path.join(directory, file);
+
+      try {
+        stat = fs.statSync(full_path);
+      } catch (error) {
+        console.warn(`Skipping unaccessible path: ${full_path}`);
+        continue;
+      }
 
       files.push(
         {
+          relative_idx: i,
           file_name: file,
-          file_size: stat.size,
+          file_size: stat.size, // bytes
+          full_path: full_path,
+          is_directory: stat.isDirectory()
         }
       );
     }
 
-    return files_arr;
+    return files;
   } catch (error: any) {
-    return {error: error.message};
+    return { error: error.message };
   }
-});
-
-// util //
-
-async function getPath(directories: string[]): Promise<string> {
-  let path = '';
-  for (let i = 0; i < directories.length; i++) {
-    const name = directories[i];
-    path = path + name;
-    if (i < directories.length -1) {
-      path = path + '/';
-    }
-  }
-
-  return path;
 }
