@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    ReadDirectory: (directory: string) => ipcRenderer.invoke('read-directory', directory),
     GetOSInfo: () => ipcRenderer.invoke('get-osi-info'),
+    SelectDirectory: () => ipcRenderer.invoke('select-directory'),
+    ReadDirectory: (directory: string | null) => ipcRenderer.invoke('read-directory', directory),
 });
 
 window.addEventListener('DOMContentLoaded', () => {

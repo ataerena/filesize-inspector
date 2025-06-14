@@ -1,28 +1,12 @@
 export default class DirectoryNode {
-    private parent: DirectoryNode | null;
-    private children: DirectoryNode[];
-    private stat: FileItem;
+    public parent: DirectoryNode | null;
+    public children: DirectoryNode[];
+    public info: FileInfo;
 
-    constructor(_stat: FileItem, _parent: DirectoryNode | null) {
+    constructor(_info: FileInfo, _parent: DirectoryNode | null) {
         this.parent = _parent;
         this.children = [];
-        this.stat = _stat;
-    }
-
-    GetParent(): DirectoryNode | null {
-        return this.parent;
-    }
-
-    GetChildren(): DirectoryNode[] {
-        return this.children;
-    }
-
-    GetChildAt(index: number): DirectoryNode {
-        return this.children[index];
-    }
-
-    GetStat(): FileItem {
-        return this.stat;
+        this.info = _info;
     }
 
     AddToChildren(node: DirectoryNode): void {

@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue';
+import DirectoryNode from './types/DirectoryNode';
 
-const osi_info = ref<OsiInfo>({
-  rootdir: '',
-  homedir: '',
-  tmpdir: '',
-  hostname: '',
-});
+const currentNode = ref<DirectoryNode | null>(null);
+const loading = ref<boolean>(false);
 
-const files = ref<FileItem[]>([]);
-const error = ref<string | null>(null);
-
-const files_frame_headers: FileItemHeader[] = [
+const files_frame_headers: FileInfoHeader[] = [
   {
     key: 'is_directory',
     text: '',
@@ -25,58 +19,34 @@ const files_frame_headers: FileItemHeader[] = [
   {
     key: 'file_size',
     text: 'File Size',
-    formatter: (bytes: number) => { return FormatBytes(bytes) }
+    formatter: function (bytes: number) { return FormatBytes(bytes) }
   },
 ];
 
-onMounted(async function() {
-  await GetOsiInfo();
-  await ReadDirectory(null);
-});
-
-async function GetOsiInfo() {
-  osi_info.value = await window.electronAPI.GetOSInfo();
+async function HandleClickSelectDirectory() {
+  const directory = await window.electronAPI.SelectDirectory();
+  if (directory) {
+    await ReadDirectory(directory);
+  }
 }
 
-async function ReadDirectory(item: FileItem | null, readParent: boolean = false): Promise<void> {
+async function ReadDirectory(directory: string | null): Promise<void> {
   try {
-    if (item && item.is_directory === false) {
-      return;
-    }
-
-    console.log(item)
-    
-    let directory: string;
-    if (readParent && item) {
-      directory = item.parent_path;
-    } else if (!readParent && item) {
-      directory = item.full_path;
-    } else if (!item) {
-      directory = osi_info.value.rootdir;
-    } else {
-      directory = '';
-    }
-
-    const result = await window.electronAPI.ReadDirectory(directory);
-    if (Array.isArray(result)) {
-      files.value = result;
-      error.value = null;
-    } else {
-      error.value = null;
-    }
+    await SetLoading(true);
+    currentNode.value = await window.electronAPI.ReadDirectory(directory);
   } catch (error: any) {
     console.log(error.message)
   } finally {
-    await HandleDirectoryRead();
+    await SetLoading(false);
   }
 }
 
-async function HandleDirectoryRead() {
-  if (error.value) {
-    alert(error.value);
-  } else {
-    error.value = null;
-  }
+async function SetLoading(_loading: boolean): Promise<void> {
+  loading.value = _loading;
+}
+
+function SetCurrentNode(node: DirectoryNode | null) {
+  currentNode.value = node;
 }
 
 function FormatBytes(bytes: number): string {
@@ -106,36 +76,38 @@ function FormatBytes(bytes: number): string {
 
 <template>
   <div class="wrapper">
-    <div class="top-navbar">
-      <button v-if="files && files.length > 0 && files[0].parent_path"
-        @click="ReadDirectory(files[0], true)"
-      >
-        Back
-      </button>
+    <button class="centered-item" @click="HandleClickSelectDirectory()" v-if="!currentNode && !loading">
+      Click to select directory / folder
+    </button>
+
+    <div class="centered-item" v-else-if="!currentNode && loading">
+      Loading...
     </div>
 
-    <div class="main-frame">
+    <div class="main-frame" v-else-if="currentNode && !loading">
+      <div class="top-navbar">
+        <button @click="SetCurrentNode(currentNode.parent)" v-if="currentNode.parent">
+          Back
+        </button>
+      </div>
+
       <div class="headers-row">
-        <div v-for="header in files_frame_headers" :key="header.key"
-          class="file-item-col"
-        >
+        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col">
           {{ header.text }}
         </div>
       </div>
 
-      <div v-for="file in files" :key="file.relative_idx"
-        class="file-item-row" :class="{'no-pointer': !file.is_directory}"
-        @click="ReadDirectory(file)"
+      <div v-for="node in currentNode.children" :key="node.info.relative_idx" 
+        class="file-item-row" :class="{'no-pointer': !node.info.is_directory}" 
+        @click="SetCurrentNode(node)"
       >
-        <div v-for="header in files_frame_headers" :key="header.key"
-          class="file-item-col"
-        >
+        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col">
           <span v-if="header.formatter">
-            {{ header.formatter((file as Record<string, any>)[header.key]) }}
+            {{ header.formatter((node.info as Record<string, any>)[header.key]) }}
           </span>
 
           <span v-else>
-            {{ (file as Record<string, any>)[header.key] }}
+            {{ (node.info as Record<string, any>)[header.key] }}
           </span>
         </div>
       </div>
@@ -147,20 +119,15 @@ function FormatBytes(bytes: number): string {
   .wrapper {
     width: 100% !important;
     height: 100% !important;
-  }
-
-  .top-navbar {
-    width: 100%;
-    padding: 1em .5em;
 
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+  }
 
-    > * {
-      margin-right: 1em;
-    }
+  .centered-item {
+    margin: auto;
   }
 
   .main-frame {
@@ -169,6 +136,20 @@ function FormatBytes(bytes: number): string {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+
+    > .top-navbar {
+      width: 100%;
+      padding: 1em .5em;
+    
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: flex-start;
+    
+      >* {
+        margin-right: 1em;
+      }
+    }
 
     > .headers-row, .file-item-row {
       width: 100%;

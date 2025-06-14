@@ -1,25 +1,26 @@
+import DirectoryNode from "./DirectoryNode";
 export {};
 
 declare global {
     interface Window {
         electronAPI: {
-            ReadDirectory: (directory: string) => Promise<FileItem[] | {error: string}>,
             GetOSInfo: () => Promise<OsiInfo>,
+            SelectDirectory: () => Promise<string | null>,
+            ReadDirectory: (directory: string | null) => Promise<DirectoryNode | null>,
         };
     }
 
-    type FileItemHeader = {
+    type FileInfoHeader = {
         key: string,
         text: string,
         formatter: ((val: any) => any) | null,
     }
 
-    type FileItem = {
+    type FileInfo = {
         relative_idx: number,
         file_name: string,
         file_size: number,
-        full_path: string,
-        parent_path: string,
+        file_path: string,
         is_directory: boolean,
     }
 

@@ -1,8 +1,10 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { fileURLToPath } from 'url';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+
+import DirectoryNode from '../src/types/DirectoryNode';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,15 +48,61 @@ ipcMain.handle('get-osi-info', async (_event) => {
   return osi_info;
 });
 
-ipcMain.handle('read-directory', async (_event, directory: string) => {
-  return await ReadProcess(directory);
+ipcMain.handle('select-directory', async () => {
+  const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+  return result.canceled ? null : result.filePaths[0];
 });
 
-async function ReadProcess(directory: string): Promise<FileItem[] | {error: string}> {
-  try {
-    const files_arr: any = fs.readdirSync(directory);
+ipcMain.handle('read-directory', async (_event, directory: string | null) => {
+  if (directory) {
+    console.log("Directory: ", directory);
+    let stat: fs.Stats;
+    try {
+      stat = fs.statSync(directory);
+    } catch (error) {
+      throw new Error('Error getting the stats of root directory!');
+    }
 
-    let files: any = [];
+    const node_info: FileInfo = {
+      relative_idx: 0,
+      file_name: directory,
+      file_size: stat.size, // bytes
+      file_path: directory,
+      is_directory: stat.isDirectory(),
+    };
+
+    return await ReadProcess(new DirectoryNode(node_info, null));
+  } else {
+    return await ReadProcess(null);
+  }
+});
+
+async function ReadProcess(node: DirectoryNode | null): Promise<DirectoryNode | null> {
+  try {
+    let directory: string = '';
+    if (!node) {
+      directory = os.homedir();
+      let stat: fs.Stats;
+      try {
+        stat = fs.statSync(directory);
+      } catch (error) {
+        throw new Error('Error getting the stats of root directory!');
+      }
+
+      const node_info: FileInfo = {
+        relative_idx: 0,
+        file_name: directory,
+        file_size: stat.size, // bytes
+        file_path: directory,
+        is_directory: stat.isDirectory(),
+      };
+
+      node = new DirectoryNode(node_info, null);
+    } else {
+      directory = node.info.file_path;
+    }
+
+    const files_arr: any = fs.readdirSync(directory);
     for (let i = 0; i < files_arr.length; i++) {
       const file = files_arr[i];
       let stat: fs.Stats;
@@ -67,20 +115,24 @@ async function ReadProcess(directory: string): Promise<FileItem[] | {error: stri
         continue;
       }
 
-      files.push(
-        {
-          relative_idx: i,
-          file_name: file,
-          file_size: stat.size, // bytes
-          full_path: full_path,
-          parent_path: path.dirname(full_path),
-          is_directory: stat.isDirectory(),
-        }
-      );
+      const new_node_info: FileInfo = {
+        relative_idx: i,
+        file_name: file,
+        file_size: stat.size, // bytes
+        file_path: full_path,
+        is_directory: stat.isDirectory(),
+      };
+
+      const new_node = new DirectoryNode(new_node_info, node);
+      if (new_node.info.is_directory) {
+        await ReadProcess(new_node);
+      }
+
+      node.AddToChildren(new_node);
     }
 
-    return files;
+    return node;
   } catch (error: any) {
-    return { error: error.message };
+    return null;
   }
 }
