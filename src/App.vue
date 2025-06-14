@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted} from 'vue';
+import { ref } from 'vue';
 import DirectoryNode from './types/DirectoryNode';
 
 const currentNode = ref<DirectoryNode | null>(null);
