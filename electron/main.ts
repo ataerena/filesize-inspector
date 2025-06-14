@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as os from "os";
+import * as os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,11 +35,18 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.handle('read-directory', async (_event, directory: string | null) => {
-  if (!directory) {
-    directory = os.platform() === 'win32' ? (process.env.SystemDrive || process.cwd().slice(0, 3)) + '\\' : '/';;
-  }
-  
+ipcMain.handle('get-osi-info', async (_event) => {
+  const osi_info: OsiInfo = {
+    rootdir: os.platform() === 'win32' ? (process.env.SystemDrive || process.cwd().slice(0, 3)) + '\\' : '/',
+    homedir: os.homedir(),
+    tmpdir: os.tmpdir(),
+    hostname: os.hostname(),
+  };
+
+  return osi_info;
+});
+
+ipcMain.handle('read-directory', async (_event, directory: string) => {
   return await ReadProcess(directory);
 });
 
@@ -66,7 +73,8 @@ async function ReadProcess(directory: string): Promise<FileItem[] | {error: stri
           file_name: file,
           file_size: stat.size, // bytes
           full_path: full_path,
-          is_directory: stat.isDirectory()
+          parent_path: path.dirname(full_path),
+          is_directory: stat.isDirectory(),
         }
       );
     }

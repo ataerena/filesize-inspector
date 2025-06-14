@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue';
 
-const node = ref<FileItem[]>([]);
+const osi_info = ref<OsiInfo>({
+  rootdir: '',
+  homedir: '',
+  tmpdir: '',
+  hostname: '',
+});
+
+const files = ref<FileItem[]>([]);
 const error = ref<string | null>(null);
 
 const files_frame_headers: FileItemHeader[] = [
@@ -23,18 +30,36 @@ const files_frame_headers: FileItemHeader[] = [
 ];
 
 onMounted(async function() {
+  await GetOsiInfo();
   await ReadDirectory(null);
 });
 
-async function ReadDirectory(item: FileItem | null): Promise<void> {
+async function GetOsiInfo() {
+  osi_info.value = await window.electronAPI.GetOSInfo();
+}
+
+async function ReadDirectory(item: FileItem | null, readParent: boolean = false): Promise<void> {
   try {
     if (item && item.is_directory === false) {
       return;
     }
 
-    const result = await window.electronAPI.ReadDirectory(item?.full_path || null);
+    console.log(item)
+    
+    let directory: string;
+    if (readParent && item) {
+      directory = item.parent_path;
+    } else if (!readParent && item) {
+      directory = item.full_path;
+    } else if (!item) {
+      directory = osi_info.value.rootdir;
+    } else {
+      directory = '';
+    }
+
+    const result = await window.electronAPI.ReadDirectory(directory);
     if (Array.isArray(result)) {
-      node.value = result;
+      files.value = result;
       error.value = null;
     } else {
       error.value = null;
@@ -61,18 +86,19 @@ function FormatBytes(bytes: number): string {
   const TB = 1099511627776;
   const PB = 1125899906842624;
 
+  const FIX_TO = 2;
   if (bytes < kB) {
     return `${bytes}B`;
   } else if (bytes >= kB && bytes < MB) {
-    return `${(bytes/kB).toFixed(6)}kB`;
+    return `${(bytes/kB).toFixed(FIX_TO)}kB`;
   } else if (bytes >= MB && bytes < GB) {
-    return `${(bytes/kB).toFixed(6)}MB`;
+    return `${(bytes/kB).toFixed(FIX_TO)}MB`;
   } else if (bytes >= GB && bytes < TB) {
-    return `${(bytes/kB).toFixed(6)}GB`;
+    return `${(bytes/kB).toFixed(FIX_TO)}GB`;
   } else if (bytes >= TB && bytes < PB) {
-    return `${(bytes/kB).toFixed(6)}TB`;
+    return `${(bytes/kB).toFixed(FIX_TO)}TB`;
   } else {
-    return `${(bytes/PB).toFixed(6)}PB`;
+    return `${(bytes/PB).toFixed(FIX_TO)}PB`;
   }
 }
 
@@ -81,7 +107,9 @@ function FormatBytes(bytes: number): string {
 <template>
   <div class="wrapper">
     <div class="top-navbar">
-      <button>
+      <button v-if="files && files.length > 0 && files[0].parent_path"
+        @click="ReadDirectory(files[0], true)"
+      >
         Back
       </button>
     </div>
@@ -95,7 +123,7 @@ function FormatBytes(bytes: number): string {
         </div>
       </div>
 
-      <div v-for="file in node" :key="file.relative_idx"
+      <div v-for="file in files" :key="file.relative_idx"
         class="file-item-row" :class="{'no-pointer': !file.is_directory}"
         @click="ReadDirectory(file)"
       >

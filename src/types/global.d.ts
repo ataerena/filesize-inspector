@@ -3,7 +3,8 @@ export {};
 declare global {
     interface Window {
         electronAPI: {
-            ReadDirectory: (directory: string | null) => Promise<FileItem[] | {error: string}>,
+            ReadDirectory: (directory: string) => Promise<FileItem[] | {error: string}>,
+            GetOSInfo: () => Promise<OsiInfo>,
         };
     }
 
@@ -18,6 +19,14 @@ declare global {
         file_name: string,
         file_size: number,
         full_path: string,
+        parent_path: string,
         is_directory: boolean,
+    }
+
+    type OsiInfo = {
+        rootdir: string, 
+        homedir: string, 
+        tmpdir: string, 
+        hostname: string
     }
 }
