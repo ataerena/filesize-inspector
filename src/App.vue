@@ -8,7 +8,7 @@ const loading = ref<boolean>(false);
 const files_frame_headers: FileInfoHeader[] = [
   {
     key: 'is_directory',
-    text: '',
+    text: 'Type',
     formatter: null,
   },
   {
@@ -62,11 +62,11 @@ function FormatBytes(bytes: number): string {
   } else if (bytes >= kB && bytes < MB) {
     return `${(bytes/kB).toFixed(FIX_TO)}kB`;
   } else if (bytes >= MB && bytes < GB) {
-    return `${(bytes/kB).toFixed(FIX_TO)}MB`;
+    return `${(bytes/MB).toFixed(FIX_TO)}MB`;
   } else if (bytes >= GB && bytes < TB) {
-    return `${(bytes/kB).toFixed(FIX_TO)}GB`;
+    return `${(bytes/GB).toFixed(FIX_TO)}GB`;
   } else if (bytes >= TB && bytes < PB) {
-    return `${(bytes/kB).toFixed(FIX_TO)}TB`;
+    return `${(bytes/TB).toFixed(FIX_TO)}TB`;
   } else {
     return `${(bytes/PB).toFixed(FIX_TO)}PB`;
   }
@@ -106,6 +106,10 @@ function FormatBytes(bytes: number): string {
             {{ header.formatter((node.info as Record<string, any>)[header.key]) }}
           </span>
 
+          <span v-else-if="header.key === 'is_directory'">
+            <fa-icon :icon="(node.info as Record<string, any>)['is_directory'] === true ? ['fas', 'folder'] : ['fas', 'file']" />
+          </span>
+
           <span v-else>
             {{ (node.info as Record<string, any>)[header.key] }}
           </span>
@@ -124,10 +128,6 @@ function FormatBytes(bytes: number): string {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-  }
-
-  .centered-item {
-    margin: auto;
   }
 
   .main-frame {

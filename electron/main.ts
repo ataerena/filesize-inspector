@@ -128,6 +128,8 @@ async function ReadProcess(node: DirectoryNode | null): Promise<DirectoryNode | 
         await ReadProcess(new_node);
       }
 
+      node.info.file_size += new_node_info.file_size;
+
       node.AddToChildren(new_node);
     }
 
