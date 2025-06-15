@@ -97,6 +97,19 @@ button {
   }
 }
 
+select {
+  border: 0 !important;
+  outline: thin solid var(----main-color);
+  background-color: var(--main-btn-bg-color);
+  color: var(--main-btn-color);
+  font-size: 1vw;
+  
+  padding: .5em 1em;
+  border-radius: .3em;
+
+  box-shadow: 0 .1em .1em .5em thin solid var(--main-bg-color);
+}
+
 .centered-item {
   margin: auto;
 }

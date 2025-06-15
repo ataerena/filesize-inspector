@@ -1,0 +1,26 @@
+{
+    "en": {
+        "is_directory": "Type",
+        "file_name": "File Name",
+        "file_size": "File Size",
+        "file_size_percentage": "Used Space",
+        "back": "Back",
+        "lightmode": "Light Mode",
+        "language": "Language",
+        "select_directory": "Select directory",
+        "directory": "Directory",
+        "file": "File"
+    },
+    "tr": {
+        "is_directory": "Tip",
+        "file_name": "Dosya Adı",
+        "file_size": "Dosya Boyutu",
+        "file_size_percentage": "Kullanılan Alan",
+        "back": "Geri",
+        "lightmode": "Aydınlık Tema",
+        "language": "Dil",
+        "select_directory": "Dizin seç",
+        "directory": "Dizin",
+        "file": "Dosya"
+    }
+}

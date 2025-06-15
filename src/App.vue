@@ -1,34 +1,42 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import DirectoryNode from './types/DirectoryNode';
+import locale from './language.json';
 
 const currentNode = ref<DirectoryNode | null>(null);
 const loading = ref<boolean>(false);
 
 const lightmode = ref<boolean>(false);
+const selectedLanguage = ref<string>('en');
 
-const files_frame_headers: FileInfoHeader[] = [
-  {
-    key: 'is_directory',
-    text: 'Type',
-    flex: 1,
-  },
-  {
-    key: 'file_name',
-    text: 'File Name',
-    flex: 4,
-  },
-  {
-    key: 'file_size',
-    text: 'File Size',
-    flex: 2,
-  },
-  {
-    key: 'file_size_percentage',
-    text: 'Used Space',
-    flex: 4,
-  },
-];
+const files_frame_headers = computed(() => {
+  const headers: FileInfoHeader[] = [
+    {
+      key: 'is_directory',
+      text: (locale as Record<string, any>)[selectedLanguage.value]['is_directory'],
+      flex: 1,
+    },
+    {
+      key: 'file_name',
+      text: (locale as Record<string, any>)[selectedLanguage.value]['file_name'],
+      flex: 4,
+    },
+    {
+      key: 'file_size',
+      text: (locale as Record<string, any>)[selectedLanguage.value]['file_size'],
+      flex: 2,
+    },
+    {
+      key: 'file_size_percentage',
+      text: (locale as Record<string, any>)[selectedLanguage.value]['file_size_percentage'],
+      flex: 4,
+    },
+  ];
+
+  return headers;
+});
+
+const available_languages: string[] = ['en', 'tr'];
 
 onMounted(() => {
   let _lightmode: boolean = (localStorage.getItem('lightmode') === 'true' ? true : false);
@@ -138,23 +146,36 @@ async function SortBy(key: string): Promise<void> {
     <div class="main-frame" v-else-if="!loading">
       <div class="top-navbar">
         <button v-if="currentNode" @click="SetCurrentNode(currentNode.parent)" :disabled="currentNode.parent === null">
-          Back
+          {{ (locale as Record<string, any>)[selectedLanguage]['back'] }}
         </button>
         <button v-else disabled>
-          Back
+          {{ (locale as Record<string, any>)[selectedLanguage]['back'] }}
         </button>
+
+        <div>
+          <input type="checkbox" id="lightmode-checkbox" v-model="lightmode" @change="SetLightMode(lightmode)">
+          <label for="lightmode-checkbox">{{ (locale as Record<string, any>)[selectedLanguage]['lightmode'] }}</label>
+        </div>
+        
+        <div style="border-left: thin solid var(--headers-row-bottom-border); padding: 0 1em 0 1em"
+          :style="{borderRight: currentNode !== null ? 'thin solid var(--headers-row-bottom-border)' : 'none'}"
+        >
+          <select id="language-select" v-model="selectedLanguage">
+            <option v-for="item in available_languages"
+              :value="item"
+              :key="item"
+            >
+              {{ item.toUpperCase() }}
+            </option>
+          </select>
+        </div>
 
         <div v-if="currentNode" style="font-weight: bold; font-size: 1vw;">
           <span style="user-select: text !important;">{{ currentNode.info.file_path }}</span> - {{ FormatBytes(currentNode.info.file_size) }}
         </div>
 
-        <div>
-          <input type="checkbox" id="lightmode-checkbox" v-model="lightmode" @change="SetLightMode(lightmode)">
-          <label for="lightmode-checkbox">Light Mode</label>
-        </div>
-
         <button class="centered-item" @click="HandleClickSelectDirectory()">
-          Click to select directory / folder
+          {{ (locale as Record<string, any>)[selectedLanguage]['select_directory'] }}
         </button>
       </div>
 
@@ -177,11 +198,11 @@ async function SortBy(key: string): Promise<void> {
           <div v-else-if="header.key === 'is_directory'">
             <span v-if="(node.info as Record<string, any>)['is_directory'] === true">
               <fa-icon :icon="['fas', 'folder']" />
-              &nbsp;Directory
+              &nbsp;{{ (locale as Record<string, any>)[selectedLanguage]['directory'] }}
             </span>
             <span v-else>
               <fa-icon :icon="['fas', 'file']" />
-              &nbsp;File
+              &nbsp;{{ (locale as Record<string, any>)[selectedLanguage]['file'] }}
             </span>
           </div>
 
