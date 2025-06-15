@@ -108,13 +108,23 @@ async function SortBy(key: string): Promise<void> {
   }
   currentNode.value.info.order_key = key;
 
-  currentNode.value.children.sort((a, b) => {
-    if (currentNode.value != null && currentNode.value.info.order_increasingly === true) {
-      return (b.info as Record<string, any>)[key] - (a.info as Record<string, any>)[key];
-    } else {
-      return (a.info as Record<string, any>)[key] - (b.info as Record<string, any>)[key];
-    }
-  });
+  if (key === 'file_name') {
+    currentNode.value.children.sort((a, b) => {
+      if (currentNode.value != null && currentNode.value.info.order_increasingly === true) {
+        return (b.info as Record<string, any>)[key].localeCompare((a.info as Record<string, any>)[key]);
+      } else {
+        return (a.info as Record<string, any>)[key].localeCompare((b.info as Record<string, any>)[key]);
+      }
+    });
+  } else {
+    currentNode.value.children.sort((a, b) => {
+      if (currentNode.value != null && currentNode.value.info.order_increasingly === true) {
+        return (b.info as Record<string, any>)[key] - (a.info as Record<string, any>)[key];
+      } else {
+        return (a.info as Record<string, any>)[key] - (b.info as Record<string, any>)[key];
+      }
+    });
+  }
 }
 
 </script>
@@ -134,8 +144,8 @@ async function SortBy(key: string): Promise<void> {
           Back
         </button>
 
-        <div v-if="currentNode" style="font-weight: bold; font-size: 1vw">
-          {{ currentNode.info.file_path }} - {{ FormatBytes(currentNode.info.file_size) }}
+        <div v-if="currentNode" style="font-weight: bold; font-size: 1vw;">
+          <span style="user-select: text !important;">{{ currentNode.info.file_path }}</span> - {{ FormatBytes(currentNode.info.file_size) }}
         </div>
 
         <div>

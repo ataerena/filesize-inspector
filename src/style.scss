@@ -8,7 +8,7 @@
   --main-btn-color: rgba(30, 30, 30, .8);
   --main-btn-bg-color: rgba(255, 255, 255, .8);
   --main-btn-bg-color--hover: rgba(255, 255, 255, .6);
-  --main-btn-bg-color--disabled: rgba(255, 255, 255, .4);
+  --main-btn-bg-color--disabled: rgba(255, 255, 255, .5);
   --main-btn-outline-color--focus: rgba(255, 255, 255, 1);
   --headers-row-bottom-border: rgb(245, 245, 245);
   --file-item-row-bottom-border: rgb(213, 213, 213);
@@ -27,6 +27,9 @@
 
   display: flex;
   place-items: center;
+
+  transition: color 150ms, background-color 150ms;
+  user-select: none;
 }
 
 .light-scheme {
