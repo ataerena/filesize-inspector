@@ -23,6 +23,8 @@ declare global {
         file_size_percentage: number,
         file_path: string,
         is_directory: boolean,
+        order_key: string,
+        order_increasingly: boolean,
     }
 
     type OsiInfo = {

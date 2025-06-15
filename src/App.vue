@@ -5,9 +5,6 @@ import DirectoryNode from './types/DirectoryNode';
 const currentNode = ref<DirectoryNode | null>(null);
 const loading = ref<boolean>(false);
 
-const currentlySortedKey = ref<string>('');
-const isIncreasing = ref<boolean>(false);
-
 const lightmode = ref<boolean>(false);
 
 const files_frame_headers: FileInfoHeader[] = [
@@ -76,8 +73,6 @@ function SetCurrentNode(node: DirectoryNode | null) {
     return;
   
   currentNode.value = node;
-  isIncreasing.value = true;
-  currentlySortedKey.value = '';
 }
 
 function FormatBytes(bytes: number): string {
@@ -106,15 +101,15 @@ function FormatBytes(bytes: number): string {
 async function SortBy(key: string): Promise<void> {
   if (currentNode.value === null) return;
 
-  if (currentlySortedKey.value != key) {
-    isIncreasing.value = true;
+  if (currentNode.value.info.order_key != key) {
+    currentNode.value.info.order_increasingly = true;
   } else {
-    isIncreasing.value = !isIncreasing.value;
+    currentNode.value.info.order_increasingly = !currentNode.value.info.order_increasingly;
   }
-  currentlySortedKey.value = key;
+  currentNode.value.info.order_key = key;
 
   currentNode.value.children.sort((a, b) => {
-    if (isIncreasing.value === true) {
+    if (currentNode.value != null && currentNode.value.info.order_increasingly === true) {
       return (b.info as Record<string, any>)[key] - (a.info as Record<string, any>)[key];
     } else {
       return (a.info as Record<string, any>)[key] - (b.info as Record<string, any>)[key];
@@ -155,7 +150,7 @@ async function SortBy(key: string): Promise<void> {
 
       <div class="headers-row">
         <div v-for="header in files_frame_headers" :key="header.key" 
-          class="file-item-col" :class="{'currently-sorted-key': currentlySortedKey === header.key}" :style="{flex: header.flex}"
+          class="file-item-col" :class="{'currently-sorted-key': currentNode?.info.order_key === header.key}" :style="{flex: header.flex}"
           @click="SortBy(header.key)"
         >
           {{ header.text }}
