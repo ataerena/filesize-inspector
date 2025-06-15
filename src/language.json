@@ -9,6 +9,7 @@
         "language": "Language",
         "select_directory": "Select directory to scan",
         "loading_tip": "Selecting very large directories can bump up the scan time. It would be in your best interest to avoid scanning directories very close to the root.",
+        "force_quit": "Force Quit",
         "directory": "Directory",
         "file": "File"
     },
@@ -22,6 +23,7 @@
         "language": "Dil",
         "select_directory": "Taranacak dizin seç",
         "loading_tip": "Boyutu çok yüksek dizinler seçmek, tarama sürenizi arttırabilir. Kök dizine çok yakın dizinleri taramaktan kaçınmanız önerilir.",
+        "force_quit": "Kapanmaya Zorla",
         "directory": "Dizin",
         "file": "Dosya"
     }

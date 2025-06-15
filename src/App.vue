@@ -72,6 +72,10 @@ async function ReadDirectory(directory: string | null): Promise<void> {
   }
 }
 
+function ForceQuit() {
+  window.electronAPI.ForceQuit();
+}
+
 async function SetLoading(_loading: boolean): Promise<void> {
   loading.value = _loading;
 }
@@ -141,9 +145,12 @@ async function SortBy(key: string): Promise<void> {
   <div class="wrapper">
     <div class="centered-item" v-if="loading" style="text-align: center;">
       <fa-icon class="loading-spinner" :icon="['fa', 'spinner']"/>
-      <div style="font-size: 1.5vw;">
+      <div style="font-size: 1.5vw; margin-bottom: 1em;">
         {{ (locale as Record<string, any>)[selectedLanguage]['loading_tip'] }}
       </div>
+      <button @click="ForceQuit()">
+        {{ (locale as Record<string, any>)[selectedLanguage]['force_quit'] }}
+      </button>
     </div>
 
     <div class="main-frame" v-else>
@@ -305,7 +312,7 @@ async function SortBy(key: string): Promise<void> {
 
   .loading-spinner {
     font-size: 5vw;
-    margin-bottom: 1em;
+    margin-bottom: 1rem;
     animation: Spin 1000ms ease-in-out infinite;
   }
 

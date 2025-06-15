@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld('electronAPI', {
+    ForceQuit: () => ipcRenderer.invoke('force-quit'),
     GetOSInfo: () => ipcRenderer.invoke('get-osi-info'),
     SelectDirectory: () => ipcRenderer.invoke('select-directory'),
     ReadDirectory: (directory: string | null) => ipcRenderer.invoke('read-directory', directory),

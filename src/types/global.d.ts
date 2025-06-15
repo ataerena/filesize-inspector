@@ -4,6 +4,7 @@ export {};
 declare global {
     interface Window {
         electronAPI: {
+            ForceQuit: () => void,
             GetOSInfo: () => Promise<OsiInfo>,
             SelectDirectory: () => Promise<string | null>,
             ReadDirectory: (directory: string | null) => Promise<DirectoryNode | null>,

@@ -39,6 +39,10 @@ app.on('window-all-closed', () => {
   }
 });
 
+ipcMain.handle('force-quit', () => {
+  app.exit(0);
+});
+
 ipcMain.handle('get-osi-info', async (_event) => {
   const osi_info: OsiInfo = {
     rootdir: os.platform() === 'win32' ? (process.env.SystemDrive || process.cwd().slice(0, 3)) + '\\' : '/',
