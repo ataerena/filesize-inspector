@@ -139,11 +139,14 @@ async function SortBy(key: string): Promise<void> {
 
 <template>
   <div class="wrapper">
-    <div class="centered-item" v-if="loading">
-      <fa-icon class="loading-spinner" :icon="['fa', 'spinner']" />
+    <div class="centered-item" v-if="loading" style="text-align: center;">
+      <fa-icon class="loading-spinner" :icon="['fa', 'spinner']"/>
+      <div style="font-size: 1.5vw;">
+        {{ (locale as Record<string, any>)[selectedLanguage]['loading_tip'] }}
+      </div>
     </div>
 
-    <div class="main-frame" v-else-if="!loading">
+    <div class="main-frame" v-else>
       <div class="top-navbar">
         <button v-if="currentNode" @click="SetCurrentNode(currentNode.parent)" :disabled="currentNode.parent === null">
           {{ (locale as Record<string, any>)[selectedLanguage]['back'] }}
@@ -301,7 +304,9 @@ async function SortBy(key: string): Promise<void> {
   }
 
   .loading-spinner {
-    animation: Spin 500ms linear infinite;
+    font-size: 5vw;
+    margin-bottom: 1em;
+    animation: Spin 1000ms ease-in-out infinite;
   }
 
   @keyframes Spin {
