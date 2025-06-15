@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import DirectoryNode from './types/DirectoryNode';
 
 const currentNode = ref<DirectoryNode | null>(null);
 const loading = ref<boolean>(false);
+
+const currentlySortedKey = ref<string>('');
+const isIncreasing = ref<boolean>(false);
+
+const lightmode = ref<boolean>(false);
 
 const files_frame_headers: FileInfoHeader[] = [
   {
@@ -28,6 +33,22 @@ const files_frame_headers: FileInfoHeader[] = [
   },
 ];
 
+onMounted(() => {
+  let _lightmode: boolean = (localStorage.getItem('lightmode') === 'true' ? true : false);
+  SetLightMode(_lightmode);
+});
+
+function SetLightMode(_lightmode: boolean) {
+  lightmode.value = _lightmode;
+  localStorage.setItem('lightmode', String(_lightmode));
+
+  if (lightmode.value === true) {
+    document.documentElement.classList.add('light-scheme');
+  } else {
+    document.documentElement.classList.remove('light-scheme');
+  }
+}
+
 async function HandleClickSelectDirectory() {
   const directory = await window.electronAPI.SelectDirectory();
   if (directory) {
@@ -39,15 +60,6 @@ async function ReadDirectory(directory: string | null): Promise<void> {
   try {
     await SetLoading(true);
     currentNode.value = await window.electronAPI.ReadDirectory(directory);
-
-    if (currentNode.value) {
-      currentNode.value.info['file_size_percentage'] = 100;
-
-      for (let i = 0; i < currentNode.value.children.length; i++) {
-        const node = currentNode.value.children[i];
-        node.info['file_size_percentage'] = await GetPercentage(node.info.file_size);
-      }
-    }
   } catch (error: any) {
     console.log(error.message)
   } finally {
@@ -64,6 +76,8 @@ function SetCurrentNode(node: DirectoryNode | null) {
     return;
   
   currentNode.value = node;
+  isIncreasing.value = true;
+  currentlySortedKey.value = '';
 }
 
 function FormatBytes(bytes: number): string {
@@ -89,10 +103,23 @@ function FormatBytes(bytes: number): string {
   }
 }
 
-async function GetPercentage(bytes: number): Promise<number> {
-  if (!currentNode || !currentNode.value) return NaN;
+async function SortBy(key: string): Promise<void> {
+  if (currentNode.value === null) return;
 
-  return Number(((bytes / currentNode.value.info.file_size) * 100).toFixed(4));
+  if (currentlySortedKey.value != key) {
+    isIncreasing.value = true;
+  } else {
+    isIncreasing.value = !isIncreasing.value;
+  }
+  currentlySortedKey.value = key;
+
+  currentNode.value.children.sort((a, b) => {
+    if (isIncreasing.value === true) {
+      return (b.info as Record<string, any>)[key] - (a.info as Record<string, any>)[key];
+    } else {
+      return (a.info as Record<string, any>)[key] - (b.info as Record<string, any>)[key];
+    }
+  });
 }
 
 </script>
@@ -105,12 +132,21 @@ async function GetPercentage(bytes: number): Promise<number> {
 
     <div class="main-frame" v-else-if="!loading">
       <div class="top-navbar">
-        <button v-if="currentNode" @click="SetCurrentNode(currentNode.parent)">
+        <button v-if="currentNode" @click="SetCurrentNode(currentNode.parent)" :disabled="currentNode.parent === null">
           Back
         </button>
         <button v-else disabled>
           Back
         </button>
+
+        <div v-if="currentNode" style="font-weight: bold; font-size: 1vw">
+          {{ currentNode.info.file_path }} - {{ FormatBytes(currentNode.info.file_size) }}
+        </div>
+
+        <div>
+          <input type="checkbox" id="lightmode-checkbox" v-model="lightmode" @change="SetLightMode(lightmode)">
+          <label for="lightmode-checkbox">Light Mode</label>
+        </div>
 
         <button class="centered-item" @click="HandleClickSelectDirectory()">
           Click to select directory / folder
@@ -118,7 +154,10 @@ async function GetPercentage(bytes: number): Promise<number> {
       </div>
 
       <div class="headers-row">
-        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col" :style="{flex: header.flex}">
+        <div v-for="header in files_frame_headers" :key="header.key" 
+          class="file-item-col" :class="{'currently-sorted-key': currentlySortedKey === header.key}" :style="{flex: header.flex}"
+          @click="SortBy(header.key)"
+        >
           {{ header.text }}
         </div>
       </div>
@@ -167,6 +206,8 @@ async function GetPercentage(bytes: number): Promise<number> {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+
+    color: var(--main-color);
   }
 
   .main-frame {
@@ -183,7 +224,7 @@ async function GetPercentage(bytes: number): Promise<number> {
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
-      align-items: flex-start;
+      align-items: flex-end;
     
       >* {
         margin-right: 1em;
@@ -207,7 +248,7 @@ async function GetPercentage(bytes: number): Promise<number> {
 
     > .headers-row {
       font-weight: bold;
-      border-bottom: thin solid rgb(245, 245, 245);
+      border-bottom: thin solid var(--headers-row-bottom-border);
 
       > .file-item-col {
         cursor: pointer;
@@ -216,15 +257,19 @@ async function GetPercentage(bytes: number): Promise<number> {
           text-decoration: underline;
         }
       }
+
+      > .currently-sorted-key {
+        text-decoration: underline !important;
+      }
     }
 
     > .file-item-row {
-      border-bottom: thin solid rgb(213, 213, 213);
+      border-bottom: thin solid var(--file-item-row-bottom-border);
 
       cursor: pointer;
       transition: background-color 250ms;
       &:hover {
-        background-color: rgba(255, 255, 255, 0.25);
+        background-color: var(--file-item-row-background-color--hover);
       }
     }
   }
@@ -243,7 +288,7 @@ async function GetPercentage(bytes: number): Promise<number> {
 
   .used-space-container {
     border-radius: .35em;
-    outline: thin solid rgba(255, 255, 255, 0.5);
+    outline: thin solid var(--main-color);
     padding: 0 !important;
     display: flex;
     flex-direction: row;
@@ -256,11 +301,11 @@ async function GetPercentage(bytes: number): Promise<number> {
 
     > .used-space-bar {
       height: 100%;
-      background-color: rgb(78, 115, 22);
+      background-color: var(--used-space-bar-bg-color);
     }
 
     > .used-space-text {
-      color: whitesmoke;
+      color: var(--used-space-bar-text-color);
       font-size: 1vw;
       font-weight: normal;
       position: absolute;

@@ -69,7 +69,7 @@ ipcMain.handle('read-directory', async (_event, directory: string | null) => {
       relative_idx: 0,
       file_name: directory,
       file_size: stat.size, // bytes
-      file_size_percentage: 0,
+      file_size_percentage: 100,
       file_path: directory,
       is_directory: stat.isDirectory(),
     };
@@ -96,7 +96,7 @@ async function ReadProcess(node: DirectoryNode | null): Promise<DirectoryNode | 
         relative_idx: 0,
         file_name: directory,
         file_size: stat.size, // bytes
-        file_size_percentage: 0,
+        file_size_percentage: 100,
         file_path: directory,
         is_directory: stat.isDirectory(),
       };
@@ -136,6 +136,11 @@ async function ReadProcess(node: DirectoryNode | null): Promise<DirectoryNode | 
       node.info.file_size += new_node_info.file_size;
 
       node.AddToChildren(new_node);
+    }
+
+    for (let i = 0; i < node.children.length; i++) {
+      const _node = node.children[i];
+      _node.info.file_size_percentage = Number(((_node.info.file_size / node.info.file_size) * 100).toFixed(4));
     }
 
     return node;

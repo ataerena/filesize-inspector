@@ -3,8 +3,22 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color: rgba(255, 255, 255, .9);
-  background-color: rgb(36, 36, 36);
+  --main-color: rgba(255, 255, 255, .9);
+  --main-bg-color: rgb(36, 36, 36);
+  --main-btn-color: rgba(30, 30, 30, .8);
+  --main-btn-bg-color: rgba(255, 255, 255, .8);
+  --main-btn-bg-color--hover: rgba(255, 255, 255, .6);
+  --main-btn-bg-color--disabled: rgba(255, 255, 255, .4);
+  --main-btn-outline-color--focus: rgba(255, 255, 255, 1);
+  --headers-row-bottom-border: rgb(245, 245, 245);
+  --file-item-row-bottom-border: rgb(213, 213, 213);
+  --file-item-row-background-color--hover: rgba(255, 255, 255, 0.25);
+  --used-space-bar-bg-color: rgb(78, 115, 22);
+  --used-space-bar-text-color: whitesmoke;
+
+  color-scheme: light dark;
+  color: var(----main-color);
+  background-color: var(--main-bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,6 +27,22 @@
 
   display: flex;
   place-items: center;
+}
+
+.light-scheme {
+  --main-color: black;
+  --main-bg-color: rgb(225, 225, 211);
+  --main-btn-color: black;
+  --main-btn-bg-color: rgba(236, 191, 77, 0.8);
+  --main-btn-bg-color--hover: rgba(236, 191, 77, .6);
+  --main-btn-bg-color--disabled: rgba(236, 191, 77, .4);
+  --main-btn-outline-color--focus: rgba(40, 40, 40, 1);
+  --headers-row-bottom-border: rgb(62, 62, 62);
+  --file-item-row-bottom-border: rgb(50, 50, 50);
+  --file-item-row-background-color--hover: rgba(245, 245, 220, 0.25);
+  --used-space-bar-bg-color: rgb(154, 242, 205);
+  --used-space-bar-text-color: black;
+  color-scheme: light;
 }
 
 body {
@@ -36,27 +66,29 @@ body {
 
 button {
   border: 0 !important;
-  outline: thin solid rgba(255, 255, 255, .9);
-  background-color: rgba(255, 255, 255, .8);
-  color: black;
+  outline: thin solid var(----main-color);
+  background-color: var(--main-btn-bg-color);
+  color: var(--main-btn-color);
   font-size: 1vw;
   
   padding: .5em 1em;
   border-radius: .3em;
 
+  box-shadow: 0 .1em .1em .5em thin solid var(--main-bg-color);
+
   cursor: pointer;
   transition: background-color 250ms;
 
   &:hover {
-    background-color: rgba(255, 255, 255, .6);
+    background-color: var(--main-btn-bg-color--hover);
   }
 
   &:focus {
-    outline: .015em solid rgba(255, 255, 255, 1);
+    outline: .015em solid var(--main-btn-outline-color--focus);
   }
 
   &:disabled {
-    background-color: rgba(255, 255, 255, .4) !important;
+    background-color: var(--main-btn-bg-color--disabled) !important;
     pointer-events: none !important;
     cursor: default !important;
   }
