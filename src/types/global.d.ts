@@ -13,13 +13,14 @@ declare global {
     type FileInfoHeader = {
         key: string,
         text: string,
-        formatter: ((val: any) => any) | null,
+        flex: number,
     }
 
     type FileInfo = {
         relative_idx: number,
         file_name: string,
         file_size: number,
+        file_size_percentage: number,
         file_path: string,
         is_directory: boolean,
     }

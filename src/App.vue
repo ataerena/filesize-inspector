@@ -9,17 +9,22 @@ const files_frame_headers: FileInfoHeader[] = [
   {
     key: 'is_directory',
     text: 'Type',
-    formatter: null,
+    flex: 1,
   },
   {
     key: 'file_name',
     text: 'File Name',
-    formatter: null,
+    flex: 4,
   },
   {
     key: 'file_size',
     text: 'File Size',
-    formatter: function (bytes: number) { return FormatBytes(bytes) }
+    flex: 2,
+  },
+  {
+    key: 'file_size_percentage',
+    text: 'Used Space',
+    flex: 4,
   },
 ];
 
@@ -34,6 +39,15 @@ async function ReadDirectory(directory: string | null): Promise<void> {
   try {
     await SetLoading(true);
     currentNode.value = await window.electronAPI.ReadDirectory(directory);
+
+    if (currentNode.value) {
+      currentNode.value.info['file_size_percentage'] = 100;
+
+      for (let i = 0; i < currentNode.value.children.length; i++) {
+        const node = currentNode.value.children[i];
+        node.info['file_size_percentage'] = await GetPercentage(node.info.file_size);
+      }
+    }
   } catch (error: any) {
     console.log(error.message)
   } finally {
@@ -46,6 +60,9 @@ async function SetLoading(_loading: boolean): Promise<void> {
 }
 
 function SetCurrentNode(node: DirectoryNode | null) {
+  if (node === null)
+    return;
+  
   currentNode.value = node;
 }
 
@@ -72,47 +89,69 @@ function FormatBytes(bytes: number): string {
   }
 }
 
+async function GetPercentage(bytes: number): Promise<number> {
+  if (!currentNode || !currentNode.value) return NaN;
+
+  return Number(((bytes / currentNode.value.info.file_size) * 100).toFixed(4));
+}
+
 </script>
 
 <template>
   <div class="wrapper">
-    <button class="centered-item" @click="HandleClickSelectDirectory()" v-if="!currentNode && !loading">
-      Click to select directory / folder
-    </button>
-
-    <div class="centered-item" v-else-if="!currentNode && loading">
-      Loading...
+    <div class="centered-item" v-if="loading">
+      <fa-icon class="loading-spinner" :icon="['fa', 'spinner']" />
     </div>
 
-    <div class="main-frame" v-else-if="currentNode && !loading">
+    <div class="main-frame" v-else-if="!loading">
       <div class="top-navbar">
-        <button @click="SetCurrentNode(currentNode.parent)" v-if="currentNode.parent">
+        <button v-if="currentNode" @click="SetCurrentNode(currentNode.parent)">
           Back
+        </button>
+        <button v-else disabled>
+          Back
+        </button>
+
+        <button class="centered-item" @click="HandleClickSelectDirectory()">
+          Click to select directory / folder
         </button>
       </div>
 
       <div class="headers-row">
-        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col">
+        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col" :style="{flex: header.flex}">
           {{ header.text }}
         </div>
       </div>
 
-      <div v-for="node in currentNode.children" :key="node.info.relative_idx" 
-        class="file-item-row" :class="{'no-pointer': !node.info.is_directory}" 
-        @click="SetCurrentNode(node)"
-      >
-        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col">
-          <span v-if="header.formatter">
-            {{ header.formatter((node.info as Record<string, any>)[header.key]) }}
-          </span>
+      <div v-if="currentNode" v-for="node in currentNode.children" :key="node.info.relative_idx" class="file-item-row"
+        :class="{'no-pointer': !node.info.is_directory}" @click="SetCurrentNode(node)">
+        <div v-for="header in files_frame_headers" :key="header.key" class="file-item-col" :style="{flex: header.flex}">
+          <div v-if="header.key === 'file_size'">
+            {{ FormatBytes((node.info as Record<string, any>)['file_size']) }}
+          </div>
 
-          <span v-else-if="header.key === 'is_directory'">
-            <fa-icon :icon="(node.info as Record<string, any>)['is_directory'] === true ? ['fas', 'folder'] : ['fas', 'file']" />
-          </span>
+          <div v-else-if="header.key === 'is_directory'">
+            <span v-if="(node.info as Record<string, any>)['is_directory'] === true">
+              <fa-icon :icon="['fas', 'folder']" />
+              &nbsp;Directory
+            </span>
+            <span v-else>
+              <fa-icon :icon="['fas', 'file']" />
+              &nbsp;File
+            </span>
+          </div>
 
-          <span v-else>
+          <div v-else-if="header.key === 'file_size_percentage'" class="used-space-container">
+            <div class="used-space-bar"
+              :style="{width: `${(node.info as Record<string, any>)['file_size_percentage']}%`}"></div>
+            <div class="used-space-text">
+              {{ `${(node.info as Record<string, any>)['file_size_percentage']}%` }}
+            </div>
+          </div>
+
+          <div v-else>
             {{ (node.info as Record<string, any>)[header.key] }}
-          </span>
+          </div>
         </div>
       </div>
     </div>
@@ -156,7 +195,7 @@ function FormatBytes(bytes: number): string {
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
-      align-items: flex-start;
+      align-items: stretch;
 
       > .file-item-col {
         flex: 1;
@@ -187,6 +226,50 @@ function FormatBytes(bytes: number): string {
       &:hover {
         background-color: rgba(255, 255, 255, 0.25);
       }
+    }
+  }
+
+  .loading-spinner {
+    animation: Spin 500ms linear infinite;
+  }
+
+  @keyframes Spin {
+    0% {
+      transform: rotate(0)
+    } 100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .used-space-container {
+    border-radius: .35em;
+    outline: thin solid rgba(255, 255, 255, 0.5);
+    padding: 0 !important;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    height: 100%;
+
+    position: relative;
+
+    > .used-space-bar {
+      height: 100%;
+      background-color: rgb(78, 115, 22);
+    }
+
+    > .used-space-text {
+      color: whitesmoke;
+      font-size: 1vw;
+      font-weight: normal;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+      text-align: center;
+      vertical-align: center;
     }
   }
 </style>

@@ -12,6 +12,8 @@ const __dirname = path.dirname(__filename);
 const createWindow = () => {
   const win = new BrowserWindow({
     fullscreen: true,
+    width: 800,
+    height: 600,
     webPreferences: {
         preload: path.join(__dirname, 'preload.mjs')
     }
@@ -67,6 +69,7 @@ ipcMain.handle('read-directory', async (_event, directory: string | null) => {
       relative_idx: 0,
       file_name: directory,
       file_size: stat.size, // bytes
+      file_size_percentage: 0,
       file_path: directory,
       is_directory: stat.isDirectory(),
     };
@@ -93,6 +96,7 @@ async function ReadProcess(node: DirectoryNode | null): Promise<DirectoryNode | 
         relative_idx: 0,
         file_name: directory,
         file_size: stat.size, // bytes
+        file_size_percentage: 0,
         file_path: directory,
         is_directory: stat.isDirectory(),
       };
@@ -119,6 +123,7 @@ async function ReadProcess(node: DirectoryNode | null): Promise<DirectoryNode | 
         relative_idx: i,
         file_name: file,
         file_size: stat.size, // bytes
+        file_size_percentage: 0,
         file_path: full_path,
         is_directory: stat.isDirectory(),
       };
