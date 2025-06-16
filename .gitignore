@@ -14,11 +14,11 @@ dist-electron/
 release/
 build/
 
-*.exe
-*.dmg
-*.app
-*.zip
-*.7z
+# *.exe
+# *.dmg
+# *.app
+# *.zip
+# *.7z
 
 # Editor directories and files
 .vscode/*

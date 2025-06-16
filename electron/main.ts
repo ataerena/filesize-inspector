@@ -9,6 +9,8 @@ import DirectoryNode from '../src/types/DirectoryNode';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const isDev = !app.isPackaged;
+
 const createWindow = () => {
   const win = new BrowserWindow({
     fullscreen: true,
@@ -19,8 +21,11 @@ const createWindow = () => {
     }
   });
 
-  win.loadFile('dist/index.html');
-  win.loadURL('http://localhost:3000');
+  if (isDev) {
+    win.loadURL('http://localhost:3000');
+  } else {
+    win.loadFile('dist/index.html');
+  }
 }
 
 app.whenReady().then(() => {
