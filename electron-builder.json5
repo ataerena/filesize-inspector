@@ -16,7 +16,7 @@
       "dmg"
     ],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
-    "icon": "icons/filesize-inspector.icns"
+    "icon": "./icons/icon.png"
   },
   "win": {
     "target": [
@@ -28,7 +28,7 @@
       }
     ],
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
-    "icon": "icons/filesize-inspector.ico"
+    "icon": "./icons/icon.ico"
   },
   "nsis": {
     "oneClick": false,
@@ -41,6 +41,6 @@
       "AppImage"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}",
-    "icon": "icons/"
+    "icon": "./icons/icon.png"
   }
 }

@@ -3,6 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "author": "ataerena",
+  "description": "A directory scanner for inspecting what's eating up hard drive space.",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build && electron-builder",
